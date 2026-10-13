@@ -1,5 +1,5 @@
 import os
-from typing import List
+from typing import List, Optional
 from pydantic_settings import BaseSettings
 
 _DEFAULT_DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "ffd.db")).replace("\\", "/")
@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     DATABASE_URL: str = f"sqlite:///{_DEFAULT_DB_PATH}"
     CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
     OPENAI_API_KEY: str = ""
+    AI_API_KEY: str = ""
+    AI_BASE_URL: Optional[str] = None
     AI_MODEL: str = "gpt-4o-mini"
     JWT_SECRET_KEY: str = "ffd-jwt-secret-key-production-ready-2026-auth-token"
     JWT_ALGORITHM: str = "HS256"

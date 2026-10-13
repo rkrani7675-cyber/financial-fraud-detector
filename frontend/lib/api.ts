@@ -1,7 +1,23 @@
 import { CompanyListItem, AnalysisResult, UploadResponse, Anomaly, Explanation } from "./types";
-import { getStoredApiKey } from "./apiKey";
+import { getStoredAIConfig } from "./apiKey";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+
+function buildAIHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {};
+  const config = getStoredAIConfig();
+  if (config.apiKey) {
+    headers["X-User-AI-Key"] = config.apiKey;
+    headers["X-User-OpenAI-Key"] = config.apiKey;
+  }
+  if (config.baseUrl) {
+    headers["X-User-AI-Base-URL"] = config.baseUrl;
+  }
+  if (config.model) {
+    headers["X-User-AI-Model"] = config.model;
+  }
+  return headers;
+}
 
 async function parseErrorResponse(res: Response, defaultMessage: string): Promise<string> {
   try {
@@ -25,11 +41,7 @@ export async function fetchCompanies(): Promise<CompanyListItem[]> {
 }
 
 export async function fetchAnalysis(companyId: number): Promise<AnalysisResult> {
-  const headers: Record<string, string> = {};
-  const userKey = getStoredApiKey();
-  if (userKey) {
-    headers["X-User-OpenAI-Key"] = userKey;
-  }
+  const headers = buildAIHeaders();
 
   const res = await fetch(`${API_BASE_URL}/analyze/${companyId}`, {
     cache: "no-store",
@@ -56,11 +68,7 @@ export async function fetchAnomalies(companyId: number): Promise<Anomaly[]> {
 }
 
 export async function fetchExplanations(companyId: number): Promise<Explanation[]> {
-  const headers: Record<string, string> = {};
-  const userKey = getStoredApiKey();
-  if (userKey) {
-    headers["X-User-OpenAI-Key"] = userKey;
-  }
+  const headers = buildAIHeaders();
 
   const res = await fetch(`${API_BASE_URL}/explanations/${companyId}`, {
     cache: "no-store",
@@ -69,6 +77,18 @@ export async function fetchExplanations(companyId: number): Promise<Explanation[
   });
   if (!res.ok) {
     const errorMsg = await parseErrorResponse(res, `Failed to fetch AI explanations for company ID ${companyId}`);
+    throw new Error(errorMsg);
+  }
+  return await res.json();
+}
+
+export async function loadDemoDataset(): Promise<UploadResponse> {
+  const res = await fetch(`${API_BASE_URL}/upload/demo`, {
+    method: "POST",
+    credentials: "include",
+  });
+  if (!res.ok) {
+    const errorMsg = await parseErrorResponse(res, "Failed to load pre-packaged demo dataset");
     throw new Error(errorMsg);
   }
   return await res.json();

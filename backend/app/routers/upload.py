@@ -68,6 +68,15 @@ async def upload_financial_data(
     else:
         company_name = company_name.strip()
 
+    return _process_and_store_records(records, company_name, current_user, db)
+
+
+def _process_and_store_records(
+    records,
+    company_name: str,
+    current_user: Optional[User],
+    db: Session
+) -> UploadResponse:
     # 5. Create or get Company
     company = db.query(Company).filter(Company.name == company_name).first()
     if not company:
@@ -153,3 +162,35 @@ async def upload_financial_data(
         years_found=years_found,
         data_points=data_points
     )
+
+
+@router.post("/upload/demo", response_model=UploadResponse)
+def load_demo_statement(
+    current_user: Optional[User] = Depends(get_optional_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Load pre-packaged 10-year audited sample statement for instant portfolio exploration.
+    Enables zero-friction evaluation on cloud deployments (e.g. Vercel).
+    """
+    candidate_paths = [
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "sample_data", "sample_financial_data.xlsx")),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "frontend", "public", "sample_financial_data.xlsx")),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "sample_data", "sample_financial_data.csv")),
+    ]
+    target_path = next((p for p in candidate_paths if os.path.exists(p)), None)
+    if not target_path:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Bundled demo dataset file not found on server."
+        )
+
+    with open(target_path, "rb") as f:
+        file_bytes = f.read()
+
+    filename = os.path.basename(target_path)
+    records, warnings = parse_financial_file(file_bytes, filename)
+    demo_company_name = "Apex Global Holdings Ltd."
+
+    return _process_and_store_records(records, demo_company_name, current_user, db)
+

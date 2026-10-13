@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { Anomaly, Explanation } from "../lib/types";
 import ExplanationCard from "./ExplanationCard";
-import { AlertCircle, ChevronDown, ChevronUp, Filter, Sparkles } from "lucide-react";
+import { AlertCircle, ChevronDown, ChevronUp, Filter, Sparkles, ShieldAlert } from "lucide-react";
+import { SpotlightCard, ShinyBadge, AnimatedTabs } from "./react-bits";
 
 interface AnomalyListProps {
   anomalies: Anomaly[];
@@ -20,87 +21,87 @@ export default function AnomalyList({ anomalies, explanations }: AnomalyListProp
     explanationsMap.set(exp.anomaly_id, exp);
   });
 
-  const filterOptions = ["ALL", "A", "B", "C", "D", "E", "F", "G"];
+  const ruleCodes = ["A", "B", "C", "D", "E", "F", "G"];
+  const filterTabs = [
+    { id: "ALL", label: "All Rules", count: anomalies.length },
+    ...ruleCodes.map((r) => ({
+      id: r,
+      label: `Rule ${r}`,
+      count: anomalies.filter((a) => a.anomaly_type === r).length,
+    })),
+  ];
 
   const filteredAnomalies = anomalies.filter((a) => {
     if (selectedFilter === "ALL") return true;
     return a.anomaly_type === selectedFilter;
   });
 
-  const getRuleBadgeColor = (type: string) => {
+  const getRuleVariant = (type: string): "amber" | "rose" | "cyan" | "emerald" | "indigo" | "slate" => {
     switch (type) {
       case "A":
-        return "bg-amber-950/80 text-amber-300 border-amber-700/60";
+        return "amber";
       case "B":
-        return "bg-rose-950/80 text-rose-300 border-rose-700/60";
+        return "rose";
       case "C":
-        return "bg-pink-950/80 text-pink-300 border-pink-700/60";
+        return "rose";
       case "D":
-        return "bg-emerald-950/80 text-emerald-300 border-emerald-700/60";
+        return "emerald";
       case "E":
-        return "bg-purple-950/80 text-purple-300 border-purple-700/60";
+        return "indigo";
       case "F":
-        return "bg-cyan-950/80 text-cyan-300 border-cyan-700/60";
+        return "cyan";
       case "G":
-        return "bg-blue-950/80 text-blue-300 border-blue-700/60";
+        return "amber";
       default:
-        return "bg-slate-800 text-slate-300 border-slate-700";
+        return "slate";
     }
   };
 
   return (
-    <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-lg backdrop-blur-sm">
+    <SpotlightCard className="p-5 sm:p-6 border-slate-800/90">
       {/* Header and Filter Pills */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
         <div>
-          <h3 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-rose-400" />
+          <h3 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
+            <ShieldAlert className="w-5 h-5 text-rose-400" />
             Detected Financial Anomalies ({filteredAnomalies.length})
           </h3>
           <p className="text-xs text-slate-400 mt-0.5">
-            Click any flagged event to reveal its AI diagnostic report & investigation steps
+            Click any flagged event to review its factual discrepancy & forensic investigation protocol
           </p>
         </div>
 
-        {/* Rule Filter Pills */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[11px] text-slate-400 font-semibold flex items-center gap-1 mr-1">
-            <Filter className="w-3 h-3" /> Rule:
-          </span>
-          {filterOptions.map((f) => (
-            <button
-              key={f}
-              onClick={() => setSelectedFilter(f)}
-              className={`px-2.5 py-0.5 rounded-lg text-xs font-semibold font-mono transition-all ${
-                selectedFilter === f
-                  ? "bg-rose-600 text-white shadow-sm shadow-rose-500/30"
-                  : "bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700/80"
-              }`}
-            >
-              {f}
-            </button>
-          ))}
+        {/* Rule Filter Tabs */}
+        <div className="w-full lg:w-auto overflow-x-auto pb-1 lg:pb-0">
+          <AnimatedTabs
+            tabs={filterTabs}
+            activeTab={selectedFilter}
+            onChange={(id) => setSelectedFilter(id)}
+            size="sm"
+          />
         </div>
       </div>
 
       {/* Anomalies List */}
       <div className="mt-4 space-y-3">
         {filteredAnomalies.length === 0 ? (
-          <div className="text-center py-10 text-slate-400 text-xs">
+          <div className="text-center py-12 text-slate-400 text-xs sm:text-sm">
+            <AlertCircle className="w-8 h-8 text-slate-600 mx-auto mb-2" />
             No anomalies detected under filter rule {selectedFilter}.
           </div>
         ) : (
           filteredAnomalies.map((anom) => {
             const isExpanded = expandedId === anom.id;
             const explanation = explanationsMap.get(anom.id);
+            const variant = getRuleVariant(anom.anomaly_type);
 
             return (
               <div
                 key={anom.id}
-                className={`border rounded-xl transition-all overflow-hidden cursor-pointer ${
+                className={`rounded-xl border transition-all duration-200 overflow-hidden cursor-pointer ${
                   isExpanded
-                    ? "border-slate-700 bg-slate-950/70 shadow-md"
-                    : "border-slate-800/80 bg-slate-950/40 hover:border-slate-700 hover:bg-slate-950/60"
+                    ? "border-slate-700 bg-slate-950/80 shadow-md"
+                    : "border-slate-800/80 bg-slate-950/40 hover:border-slate-700/80 hover:bg-slate-950/60"
                 }`}
                 title={`FY ${anom.year} • +${anom.risk_points} pts`}
               >
@@ -111,33 +112,32 @@ export default function AnomalyList({ anomalies, explanations }: AnomalyListProp
                   className="w-full p-4 text-left flex items-center justify-between gap-4 cursor-pointer"
                   title={`FY ${anom.year} • +${anom.risk_points} pts`}
                 >
-                  <div className="flex items-center gap-3">
-                    <span
-                      className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold font-mono text-sm border shrink-0 ${getRuleBadgeColor(
-                        anom.anomaly_type
-                      )}`}
-                    >
+                  <div className="flex items-center gap-3 sm:gap-3.5">
+                    <span className="w-9 h-9 rounded-xl flex items-center justify-center font-bold font-mono text-sm border shrink-0 bg-slate-900 border-slate-700/80 text-white">
                       {anom.anomaly_type}
                     </span>
                     <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-bold text-white">{anom.name}</h4>
-                        <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md bg-slate-800 text-slate-300">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="text-sm font-bold text-white tracking-tight">{anom.name}</h4>
+                        <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md bg-slate-800/80 text-slate-300">
                           FY {anom.year}
                         </span>
+                        <ShinyBadge variant={variant} size="sm">
+                          Rule {anom.anomaly_type}
+                        </ShinyBadge>
                       </div>
-                      <p className="text-xs text-slate-300 mt-1 font-mono">{anom.description}</p>
+                      <p className="text-xs text-slate-300 mt-1 font-mono leading-relaxed">{anom.description}</p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-3 shrink-0">
                     <span
-                      className="px-2.5 py-1 rounded-lg text-xs font-bold font-mono bg-rose-950/80 text-rose-300 border border-rose-800/80 cursor-pointer"
+                      className="px-2.5 py-1 rounded-lg text-xs font-bold font-mono bg-rose-950/80 text-rose-300 border border-rose-800/80 cursor-pointer shadow-sm"
                       title={`FY ${anom.year} • +${anom.risk_points} pts`}
                     >
                       +{anom.risk_points} pts
                     </span>
-                    <div className="text-slate-400 hover:text-white">
+                    <div className="text-slate-400 hover:text-white transition-colors">
                       {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                     </div>
                   </div>
@@ -154,7 +154,7 @@ export default function AnomalyList({ anomalies, explanations }: AnomalyListProp
                       />
                     ) : (
                       <div className="p-4 text-xs text-slate-400 italic flex items-center gap-2">
-                        <Sparkles className="w-3.5 h-3.5 text-purple-400 animate-spin" />
+                        <Sparkles className="w-3.5 h-3.5 text-indigo-400 animate-spin" />
                         Generating AI analytical report for this event...
                       </div>
                     )}
@@ -165,6 +165,6 @@ export default function AnomalyList({ anomalies, explanations }: AnomalyListProp
           })
         )}
       </div>
-    </div>
+    </SpotlightCard>
   );
 }

@@ -97,31 +97,42 @@ def generate_explanation(
     year: int,
     company_name: str,
     risk_points: int,
-    user_api_key: Optional[str] = None
+    user_api_key: Optional[str] = None,
+    user_base_url: Optional[str] = None,
+    user_model: Optional[str] = None,
 ) -> Dict[str, str]:
     """
     Generate structured 3-part forensic explanation for an anomaly.
-    Uses user-provided OpenAI LLM API key if passed, or system key if configured;
+    Supports ANY OpenAI-compatible LLM provider (OpenAI, Groq, OpenRouter, DeepSeek, Ollama, etc.).
+    Uses user-provided API key, base URL, and model if passed, or system configuration;
     falls back safely to audited deterministic expert heuristic rules.
     NEVER logs or exposes any API key value.
     """
     detected_text = f"{name} detected in {year}: {description} (+{risk_points} risk points)."
 
-    # Key resolution: User floating key > System key > None
+    # Key resolution: User floating key > System AI key > System OpenAI key > None
     api_key: Optional[str] = None
     if user_api_key and user_api_key.strip():
         api_key = user_api_key.strip()
         logger.info("Generating AI explanation using user key.")
     else:
-        system_key = os.getenv("OPENAI_API_KEY") or settings.OPENAI_API_KEY
+        system_key = os.getenv("AI_API_KEY") or os.getenv("OPENAI_API_KEY") or settings.AI_API_KEY or settings.OPENAI_API_KEY
         if system_key and system_key.strip():
             api_key = system_key.strip()
             logger.info("Generating AI explanation using system key.")
 
+    # Base URL & Model resolution
+    base_url = user_base_url or os.getenv("AI_BASE_URL") or settings.AI_BASE_URL
+    model_name = user_model or os.getenv("AI_MODEL") or settings.AI_MODEL or "gpt-4o-mini"
+
     if api_key:
         try:
             from openai import OpenAI
-            client = OpenAI(api_key=api_key)
+            client_kwargs = {"api_key": api_key}
+            if base_url and base_url.strip():
+                client_kwargs["base_url"] = base_url.strip()
+            client = OpenAI(**client_kwargs)
+
             prompt = f"""You are a senior financial analyst explaining anomalies to an auditor or executive.
 Company: {company_name}
 Year: {year}
@@ -135,7 +146,7 @@ WHY IT MATTERS: (2-3 sentences explaining accounting risks. Never claim fraud, u
 RECOMMENDED INVESTIGATION: (2-3 bullet points of concrete audit/investigation checks)
 """
             completion = client.chat.completions.create(
-                model=settings.AI_MODEL,
+                model=model_name,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.2,
                 max_tokens=300

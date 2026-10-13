@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertTriangle, CheckCircle2, AlertOctagon, HelpCircle } from "lucide-react";
+import { SpotlightCard, AnimatedCounter, ShinyBadge } from "./react-bits";
 
 interface RiskScoreCardProps {
   score: number;
@@ -22,10 +23,8 @@ export default function RiskScoreCard({
     switch (lvl.toLowerCase()) {
       case "low":
         return {
-          bg: "bg-emerald-950/40 border-emerald-800/60",
-          text: "text-emerald-400",
-          badgeBg: "bg-emerald-900/60 text-emerald-200 border-emerald-700/80",
-          glow: "from-emerald-500/20 to-teal-500/10",
+          spotlightColor: "rgba(16, 185, 129, 0.12)",
+          badgeVariant: "emerald" as const,
           strokeColor: "#10b981",
           icon: CheckCircle2,
           tagline: "Standard Accounting Coherence",
@@ -33,10 +32,8 @@ export default function RiskScoreCard({
         };
       case "moderate":
         return {
-          bg: "bg-amber-950/40 border-amber-800/60",
-          text: "text-amber-400",
-          badgeBg: "bg-amber-900/60 text-amber-200 border-amber-700/80",
-          glow: "from-amber-500/20 to-orange-500/10",
+          spotlightColor: "rgba(245, 158, 11, 0.12)",
+          badgeVariant: "amber" as const,
           strokeColor: "#f59e0b",
           icon: AlertTriangle,
           tagline: "Selective Discrepancies Noted",
@@ -45,10 +42,8 @@ export default function RiskScoreCard({
       case "high":
       default:
         return {
-          bg: "bg-rose-950/40 border-rose-800/60",
-          text: "text-rose-400",
-          badgeBg: "bg-rose-900/60 text-rose-200 border-rose-700/80",
-          glow: "from-rose-500/25 to-red-500/10",
+          spotlightColor: "rgba(244, 63, 94, 0.14)",
+          badgeVariant: "rose" as const,
           strokeColor: "#f43f5e",
           icon: AlertOctagon,
           tagline: "Significant Structural Divergence",
@@ -66,21 +61,21 @@ export default function RiskScoreCard({
   const strokeDashoffset = circumference - (score / 100) * circumference;
 
   return (
-    <div className={`relative overflow-hidden rounded-2xl border p-6 backdrop-blur-xl ${config.bg} shadow-xl transition-all`}>
-      {/* Background ambient glow */}
-      <div className={`absolute -right-16 -top-16 w-56 h-56 rounded-full bg-gradient-to-br ${config.glow} blur-3xl pointer-events-none`} />
-
+    <SpotlightCard
+      spotlightColor={config.spotlightColor}
+      className="p-6 sm:p-7 border-slate-800/90"
+    >
       <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
         {/* Left: Score Gauge */}
-        <div className="flex items-center gap-6">
-          <div className="relative w-32 h-32 flex items-center justify-center">
+        <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
+          <div className="relative w-32 h-32 flex items-center justify-center shrink-0">
             <svg className="w-full h-full transform -rotate-90" viewBox="0 0 128 128">
               {/* Background circle */}
               <circle
                 cx="64"
                 cy="64"
                 r={radius}
-                className="stroke-slate-800 fill-none"
+                className="stroke-slate-800/80 fill-none"
                 strokeWidth="10"
               />
               {/* Animated Progress circle */}
@@ -98,7 +93,7 @@ export default function RiskScoreCard({
             </svg>
             <div className="absolute flex flex-col items-center justify-center">
               <span className="text-3xl font-extrabold tracking-tight text-white font-mono">
-                {score}
+                <AnimatedCounter value={score} duration={1.2} />
               </span>
               <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">
                 / 100
@@ -107,16 +102,18 @@ export default function RiskScoreCard({
           </div>
 
           <div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide border flex items-center gap-1.5 ${config.badgeBg}`}>
-                <TierIcon className="w-3.5 h-3.5" />
+            <div className="flex items-center justify-center sm:justify-start gap-2 mb-2">
+              <ShinyBadge
+                variant={config.badgeVariant}
+                icon={<TierIcon className="w-3.5 h-3.5" />}
+              >
                 {level} Risk (3-Tier Mode)
-              </span>
+              </ShinyBadge>
             </div>
-            <h2 className="text-xl font-bold text-white tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
               {config.tagline}
             </h2>
-            <p className="text-xs text-slate-300 max-w-sm mt-1 leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-300 max-w-md mt-1 leading-relaxed">
               {config.description}
             </p>
           </div>
@@ -124,33 +121,39 @@ export default function RiskScoreCard({
 
         {/* Right: Key Stats & Summary Cards */}
         <div className="grid grid-cols-3 gap-3 w-full lg:w-auto">
-          <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5 text-center min-w-[105px]">
-            <div className="text-2xl font-bold text-white font-mono">{totalAnomalies}</div>
+          <div className="rounded-xl border border-slate-800/90 bg-slate-950/70 p-3.5 text-center min-w-[105px] shadow-sm">
+            <div className="text-2xl font-bold text-white font-mono">
+              <AnimatedCounter value={totalAnomalies} duration={0.8} />
+            </div>
             <div className="text-[11px] text-slate-400 font-medium mt-0.5">Anomalies</div>
           </div>
-          <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5 text-center min-w-[105px]">
-            <div className="text-2xl font-bold text-amber-400 font-mono">+{rawPoints}</div>
+          <div className="rounded-xl border border-slate-800/90 bg-slate-950/70 p-3.5 text-center min-w-[105px] shadow-sm">
+            <div className="text-2xl font-bold text-amber-400 font-mono">
+              +<AnimatedCounter value={rawPoints} duration={0.8} />
+            </div>
             <div className="text-[11px] text-slate-400 font-medium mt-0.5">Raw Points</div>
           </div>
-          <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5 text-center min-w-[105px]">
-            <div className="text-2xl font-bold text-slate-200 font-mono">{yearsCount}</div>
+          <div className="rounded-xl border border-slate-800/90 bg-slate-950/70 p-3.5 text-center min-w-[105px] shadow-sm">
+            <div className="text-2xl font-bold text-slate-200 font-mono">
+              <AnimatedCounter value={yearsCount} duration={0.8} />
+            </div>
             <div className="text-[11px] text-slate-400 font-medium mt-0.5">Fiscal Years</div>
           </div>
         </div>
       </div>
 
       {/* Audit Disclaimer Footer */}
-      <div className="mt-5 pt-3.5 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+      <div className="mt-5 pt-3.5 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-400">
         <div className="flex items-center gap-1.5">
-          <HelpCircle className="w-3.5 h-3.5 text-slate-500" />
+          <HelpCircle className="w-3.5 h-3.5 text-slate-500 shrink-0" />
           <span>
-            <strong>Audit Note:</strong> System identifies mathematical anomalies; does not establish legal determination of fraud.
+            <strong className="text-slate-300">Audit Protocol:</strong> System calculates mathematical divergences across statements; does not establish legal determination.
           </span>
         </div>
-        <span className="hidden sm:inline font-mono text-slate-500">
-          Scale: 0–30 Low | 31–60 Moderate | 61–100 High
+        <span className="font-mono text-slate-400 shrink-0">
+          Scale: 0–30 Low • 31–60 Moderate • 61–100 High
         </span>
       </div>
-    </div>
+    </SpotlightCard>
   );
 }
