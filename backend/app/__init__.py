@@ -1,0 +1,2 @@
+"""Financial Fraud Detector - Backend Application Package"""
+__version__ = "1.0.0"
