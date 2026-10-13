@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!-- Rounded container with border -->
+  <rect width="32" height="32" rx="8" fill="#090d16"/>
+  <rect x="0.5" y="0.5" width="31" height="31" rx="7.5" stroke="#1e293b"/>
+  
+  <defs>
+    <linearGradient id="shieldGrad" x1="6" y1="5" x2="26" y2="27" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#f43f5e"/>
+    </linearGradient>
+    <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#818cf8"/>
+      <stop offset="100%" stop-color="#4f46e5"/>
+    </linearGradient>
+    <linearGradient id="alertGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fb7185"/>
+      <stop offset="100%" stop-color="#e11d48"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Forensic Shield -->
+  <path d="M16 4.5L24 8V14.5C24 20 20.5 24.5 16 26.5C11.5 24.5 8 20 8 14.5V8L16 4.5Z" 
+        stroke="url(#shieldGrad)" stroke-width="1.75" stroke-linejoin="round" fill="#0f172a" fill-opacity="0.85"/>
+  
+  <!-- Financial Metric Bars (Multi-Year Trends) -->
+  <!-- Year 1 Bar (Normal) -->
+  <rect x="11.5" y="16.5" width="2" height="4.5" rx="0.75" fill="url(#barGrad)"/>
+  
+  <!-- Year 2 Bar (Normal) -->
+  <rect x="15" y="13.5" width="2" height="7.5" rx="0.75" fill="url(#barGrad)"/>
+  
+  <!-- Year 3 Bar (Anomaly Spike) -->
+  <rect x="18.5" y="10.5" width="2" height="10.5" rx="0.75" fill="url(#alertGrad)"/>
+  
+  <!-- Anomaly Alert Ping -->
+  <circle cx="19.5" cy="8" r="1.25" fill="#f43f5e"/>
+</svg>

@@ -9,6 +9,12 @@ export const metadata: Metadata = {
   description:
     "Production-ready forensic accounting anomaly detection platform. Analyzes 10-year financial statements across 18 ratios, 7 forensic rules, and multi-model AI diagnostics.",
   authors: [{ name: "Financial Risk Engineering Portfolio" }],
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+  },
 };
 
 export default function RootLayout({
