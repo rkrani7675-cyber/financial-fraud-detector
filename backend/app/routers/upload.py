@@ -1,7 +1,8 @@
 import logging
 import os
 from typing import Optional
-from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException, status
+from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException, status, Request
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -12,7 +13,7 @@ from app.services.extraction import parse_financial_file, DataExtractionError
 from app.services.ratios import calculate_company_ratios
 from app.services.anomaly import detect_anomalies
 from app.services.scoring import calculate_risk_score
-from app.services.ai_explanation import generate_explanation
+from app.services.ai_explanation import generate_explanation, generate_financial_statements_with_ai
 from app.models.user import User
 from app.services.auth import get_optional_current_user
 
@@ -193,4 +194,44 @@ def load_demo_statement(
     demo_company_name = "Apex Global Holdings Ltd."
 
     return _process_and_store_records(records, demo_company_name, current_user, db)
+
+
+class AIExtractPayload(BaseModel):
+    company_name: str
+    years: Optional[int] = 5
+
+
+@router.post("/upload/ai-extract", response_model=UploadResponse)
+def ai_extract_company_statements(
+    payload: AIExtractPayload,
+    request: Request,
+    current_user: Optional[User] = Depends(get_optional_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Synthesizes/extracts chronological multi-year financial statements for any company name using AI,
+    then automatically runs the complete ratio and forensic anomaly pipeline.
+    """
+    if not payload.company_name or not payload.company_name.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Company name is required for AI statement extraction."
+        )
+
+    # Extract floating AI headers
+    user_api_key = request.headers.get("X-User-AI-Key") or request.headers.get("X-User-OpenAI-Key")
+    user_base_url = request.headers.get("X-User-AI-Base-URL")
+    user_model = request.headers.get("X-User-AI-Model")
+
+    clean_name = payload.company_name.strip()
+    records = generate_financial_statements_with_ai(
+        company_name=clean_name,
+        years=payload.years or 5,
+        user_api_key=user_api_key,
+        user_base_url=user_base_url,
+        user_model=user_model
+    )
+
+    return _process_and_store_records(records, clean_name, current_user, db)
+
 

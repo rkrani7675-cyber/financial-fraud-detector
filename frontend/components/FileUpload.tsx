@@ -2,8 +2,18 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { uploadFinancialFile, loadDemoDataset } from "../lib/api";
-import { UploadCloud, FileSpreadsheet, AlertTriangle, CheckCircle, Loader2, Download, Sparkles, Building2 } from "lucide-react";
+import { uploadFinancialFile, loadDemoDataset, aiExtractCompanyStatements } from "../lib/api";
+import {
+  UploadCloud,
+  FileSpreadsheet,
+  AlertTriangle,
+  CheckCircle,
+  Loader2,
+  Download,
+  Sparkles,
+  Building2,
+  Trash2,
+} from "lucide-react";
 import { SpotlightCard, ShinyBadge } from "./react-bits";
 
 export default function FileUpload() {
@@ -15,6 +25,7 @@ export default function FileUpload() {
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isDemoLoading, setIsDemoLoading] = useState<boolean>(false);
+  const [isAIExtracting, setIsAIExtracting] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
@@ -54,6 +65,15 @@ export default function FileUpload() {
     }
   };
 
+  const handleRemoveFile = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+    setErrorMsg(null);
+  };
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
@@ -71,7 +91,7 @@ export default function FileUpload() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedFile) {
-      setErrorMsg("Please select a financial data file to upload.");
+      setErrorMsg("Please select an Excel or CSV file to upload, or use 'Extract with AI' below.");
       return;
     }
 
@@ -88,6 +108,29 @@ export default function FileUpload() {
       setErrorMsg(err.message || "Upload and analysis failed. Please try again.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleAIExtract = async () => {
+    if (!companyName.trim()) {
+      setErrorMsg("Please enter a company name (e.g. Tesla, Apple, Tata Motors) to extract statements with AI.");
+      return;
+    }
+
+    setIsAIExtracting(true);
+    setErrorMsg(null);
+    setSuccessMsg(null);
+
+    try {
+      const result = await aiExtractCompanyStatements(companyName.trim(), 5);
+      setSuccessMsg(`Multi-year financial statements successfully generated with AI for ${companyName}!`);
+      setTimeout(() => {
+        router.push(`/dashboard/${result.company_id}`);
+      }, 700);
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to generate statements with AI. You can upload an Excel file instead.");
+    } finally {
+      setIsAIExtracting(false);
     }
   };
 
@@ -164,18 +207,45 @@ export default function FileUpload() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Company Name Optional Input */}
+          {/* Company Name Optional Input + AI Statement Generator */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-              Company Name (Optional)
-            </label>
-            <input
-              type="text"
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
-              placeholder="e.g. Apex Global Holdings Ltd."
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
-            />
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-semibold text-slate-300">
+                Company Name (Optional)
+              </label>
+              <span className="text-[11px] text-slate-400">Don&apos;t have an Excel file?</span>
+            </div>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <input
+                type="text"
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                placeholder="e.g. Apex Global Holdings Ltd., Tesla, Apple..."
+                className="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all font-sans"
+              />
+              <button
+                type="button"
+                onClick={handleAIExtract}
+                disabled={!companyName.trim() || isAIExtracting || isLoading}
+                className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-indigo-700/60 hover:border-indigo-500 text-indigo-300 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0 shadow-sm"
+                title="Automatically generate or extract multi-year financial statements for this company using AI"
+              >
+                {isAIExtracting ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-400" />
+                    <span>Extracting with AI...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Extract with AI</span>
+                  </>
+                )}
+              </button>
+            </div>
+            <p className="text-[11px] text-slate-500 mt-1">
+              Type any company name and click <span className="text-indigo-400 font-medium">Extract with AI</span> to run analysis without preparing spreadsheets.
+            </p>
           </div>
 
           {/* Drag-and-Drop Area */}
@@ -216,17 +286,26 @@ export default function FileUpload() {
               </div>
 
               {selectedFile ? (
-                <div>
+                <div className="space-y-2">
                   <p className="text-sm font-bold text-white font-mono">{selectedFile.name}</p>
-                  <p className="text-xs text-emerald-400 mt-0.5">
+                  <p className="text-xs text-emerald-400">
                     {(selectedFile.size / 1024).toFixed(1)} KB • Ready for analysis
                   </p>
+                  <button
+                    type="button"
+                    onClick={handleRemoveFile}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-950/70 hover:bg-rose-900 border border-rose-800/80 text-rose-300 text-xs font-semibold transition-all mt-2 cursor-pointer shadow-sm"
+                    title="Remove selected file"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+                    <span>Remove file</span>
+                  </button>
                 </div>
               ) : (
                 <div>
                   <p className="text-sm font-semibold text-white">
                     Drop your Excel or CSV file here, or{" "}
-                    <span className="text-indigo-400 underline underline-offset-2">browse</span>
+                    <span className="text-indigo-400 underline underline-offset-2">browse files</span>
                   </p>
                   <p className="text-xs text-slate-400 mt-1 font-mono">
                     Supports .xlsx, .xls, .csv (Max 10MB • Min 3 chronological years)
@@ -248,16 +327,16 @@ export default function FileUpload() {
           {successMsg && (
             <div className="p-3.5 rounded-xl bg-emerald-950/50 border border-emerald-800/80 text-emerald-300 text-xs flex items-center gap-2">
               <CheckCircle className="w-4 h-4 shrink-0 text-emerald-400" />
-              <span>{successMsg} Redirecting to forensic dashboard...</span>
+              <span>{successMsg} Redirecting to report...</span>
             </div>
           )}
 
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={isLoading || isDemoLoading || !selectedFile}
+            disabled={isLoading || isDemoLoading || isAIExtracting || !selectedFile}
             className={`w-full py-3 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all cursor-pointer ${
-              isLoading || !selectedFile
+              isLoading || isAIExtracting || !selectedFile
                 ? "bg-slate-800 text-slate-500 cursor-not-allowed"
                 : "bg-gradient-to-r from-indigo-600 to-rose-600 text-white shadow-lg shadow-indigo-600/30 hover:opacity-95"
             }`}
@@ -265,10 +344,10 @@ export default function FileUpload() {
             {isLoading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Analyzing Statement Anomalies...</span>
+                <span>Analyzing Financial Statements...</span>
               </>
             ) : (
-              <span>Run Forensic Risk Analysis</span>
+              <span>Analyze Financial Statements</span>
             )}
           </button>
 

@@ -62,10 +62,10 @@ export default function DataTable({ financialData, ratios }: DataTableProps) {
           </div>
           <div>
             <h3 className="text-sm sm:text-base font-bold text-white tracking-tight">
-              Historical Ledger & Quantitative Analysis
+              Financial Statements & Key Ratios
             </h3>
             <p className="text-xs text-slate-400">
-              Raw multi-year statement variables and 18 calculated ratio benchmarks
+              Multi-year balance sheet, income, and cash flow metrics with 18 calculated ratio benchmarks
             </p>
           </div>
         </div>

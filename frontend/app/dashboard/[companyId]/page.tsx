@@ -170,7 +170,7 @@ function DashboardContent() {
         explanations={analysis.explanations}
       />
 
-      {/* Complete Financial Statements & Ratios Ledger */}
+      {/* Complete Financial Statements & Ratios Table */}
       <DataTable
         financialData={analysis.financial_data}
         ratios={analysis.ratios}

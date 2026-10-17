@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { fetchCompanies, loadDemoDataset } from "../lib/api";
+import { getCurrentUser } from "../lib/auth";
 import { CompanyListItem } from "../lib/types";
 import {
   ShieldAlert,
@@ -27,6 +28,7 @@ import { SpotlightCard, AnimatedCounter, ShinyBadge } from "../components/react-
 
 export default function HomePage() {
   const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [companies, setCompanies] = useState<CompanyListItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isDemoLoading, setIsDemoLoading] = useState<boolean>(false);
@@ -42,8 +44,20 @@ export default function HomePage() {
   };
 
   useEffect(() => {
-    loadCompanies();
-  }, []);
+    let mounted = true;
+    getCurrentUser().then((user) => {
+      if (!mounted) return;
+      if (!user) {
+        router.push("/signup");
+      } else {
+        setIsAuthenticated(true);
+        loadCompanies();
+      }
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [router]);
 
   const handleLaunchDemo = async () => {
     setIsDemoLoading(true);
@@ -52,12 +66,20 @@ export default function HomePage() {
       const result = await loadDemoDataset();
       router.push(`/dashboard/${result.company_id}`);
     } catch {
-      // If endpoint fails, navigate to upload page
       router.push("/upload");
     } finally {
       setIsDemoLoading(false);
     }
   };
+
+  if (isAuthenticated !== true) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 text-slate-400">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+        <p className="text-xs font-mono">Redirecting to Sign Up...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-12 sm:space-y-16">
@@ -118,7 +140,7 @@ export default function HomePage() {
             className="flex items-center gap-2 px-5 py-3.5 rounded-xl bg-slate-900/80 hover:bg-slate-850 text-slate-300 hover:text-white font-medium text-sm border border-slate-800 transition-all"
           >
             <Building2 className="w-4 h-4 text-slate-400" />
-            <span>View Registries ({companies.length})</span>
+            <span>View Companies ({companies.length})</span>
           </Link>
         </div>
 
@@ -260,7 +282,7 @@ export default function HomePage() {
         ) : companies.length === 0 ? (
           <SpotlightCard className="p-10 text-center border-slate-800/80">
             <Building2 className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-            <h4 className="text-sm font-bold text-white">No Corporate Statements Registered Yet</h4>
+            <h4 className="text-sm font-bold text-white">No Company Statements Registered Yet</h4>
             <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
               Click the demo button above to load our 10-year audited sample dataset, or upload your own statements.
             </p>

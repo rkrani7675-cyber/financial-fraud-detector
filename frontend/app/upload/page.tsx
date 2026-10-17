@@ -13,9 +13,9 @@ export default function UploadPage() {
           href="/"
           className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
         >
-          <ArrowLeft className="w-3.5 h-3.5" /> Back to Overview
+          <ArrowLeft className="w-3.5 h-3.5" /> Back to Home
         </Link>
-        <span className="text-xs font-mono text-slate-500">Pipeline Step: Ingestion & Analysis</span>
+        <span className="text-xs font-mono text-slate-400">Statement Ingestion</span>
       </div>
 
       {/* Main Upload Box */}
@@ -25,7 +25,7 @@ export default function UploadPage() {
       <div className="max-w-2xl mx-auto bg-slate-900/40 border border-slate-800/80 rounded-2xl p-5 text-xs text-slate-400 space-y-3">
         <h3 className="font-semibold text-white flex items-center gap-2">
           <FileSpreadsheet className="w-4 h-4 text-rose-400" />
-          Statement Formatting Guidelines (PRD Section 11)
+          Statement Formatting Guidelines & Required Columns
         </h3>
         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-300">
           <li className="flex items-center gap-1.5">

@@ -88,13 +88,13 @@ export default function CompaniesPage() {
             <span className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20">
               <Building2 className="w-4 h-4" />
             </span>
-            <span className="text-xs font-mono font-medium text-slate-400">Registry & Audit Vault</span>
+            <span className="text-xs font-mono font-medium text-slate-400">Audited Companies</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            Corporate Entities Ledger
+            Companies Directory
           </h1>
           <p className="text-xs text-slate-400 mt-1 max-w-xl">
-            Central repository of audited enterprise financial statements and multi-year forensic assessments.
+            Directory of analyzed corporate financial statements and multi-year anomaly assessments.
           </p>
         </div>
 
@@ -296,7 +296,7 @@ export default function CompaniesPage() {
                             href={`/dashboard/${comp.id}`}
                             className="px-3 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700/60 transition-colors"
                           >
-                            Open Dossier
+                            View Report
                           </Link>
                           <button
                             onClick={() => handleDelete(comp.id, comp.name)}

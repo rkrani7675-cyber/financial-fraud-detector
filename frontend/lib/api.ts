@@ -126,3 +126,23 @@ export async function deleteCompany(companyId: number): Promise<boolean> {
   }
   return true;
 }
+
+export async function aiExtractCompanyStatements(companyName: string, years = 5): Promise<UploadResponse> {
+  const headers = buildAIHeaders();
+  headers["Content-Type"] = "application/json";
+
+  const res = await fetch(`${API_BASE_URL}/upload/ai-extract`, {
+    method: "POST",
+    headers,
+    credentials: "include",
+    body: JSON.stringify({ company_name: companyName.trim(), years }),
+  });
+
+  if (!res.ok) {
+    const errorMsg = await parseErrorResponse(res, "Failed to generate financial statements with AI");
+    throw new Error(errorMsg);
+  }
+
+  return await res.json();
+}
+
